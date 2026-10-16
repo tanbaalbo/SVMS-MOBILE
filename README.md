@@ -11,7 +11,7 @@ SVMS(svms.sinokor.co.kr) 화면을 폰(아이폰 사파리) 폭에 맞게 다시
 사파리 북마크의 주소 칸에 아래 한 줄을 그대로 붙여넣습니다.
 
 ```
-javascript:void(function(d){var s=d.createElement('script');s.src='https://tanbaalbo.github.io/svms-mobile/svms-mobile.js?t='+Date.now();d.head.appendChild(s)}(document))
+javascript:void(function(d){var s=d.createElement('script');s.src='https://tanbaalbo.github.io/SVMS-MOBILE/svms-mobile.js?t='+Date.now();d.head.appendChild(s)}(document))
 ```
 
 북마크는 이 저장소의 `svms-mobile.js`를 불러와 실행합니다. 이 파일을 고치면 북마크를 다시 만들지 않아도 다음에 누를 때 바로 반영됩니다.
