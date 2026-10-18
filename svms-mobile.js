@@ -4,6 +4,8 @@
  * - 한 번 더 실행하거나 상단 [PC] 버튼을 누르면 원래 화면으로 돌아간다.
  */
 (function () {
+  // SVMS가 아닌 화면(새 탭 등)에서 눌렀으면 SVMS로 이동만 한다 (로그인 후 다시 누르면 됨)
+  if (location.hostname !== 'svms.sinokor.co.kr') { location.href = 'https://svms.sinokor.co.kr/'; return; }
   if (window.__svmMobile) { window.__svmMobile.toggle(); return; }
 
   var VER = '1.0';
