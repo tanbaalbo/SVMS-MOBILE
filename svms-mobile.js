@@ -6,7 +6,19 @@
 (function () {
   // SVMS가 아닌 화면(새 탭 등)에서 눌렀으면 SVMS로 이동만 한다 (로그인 후 다시 누르면 됨)
   if (location.hostname !== 'svms.sinokor.co.kr') { location.href = 'https://svms.sinokor.co.kr/'; return; }
-  if (window.__svmMobile) { window.__svmMobile.toggle(); return; }
+  // 화면 아래에 잠깐 뜨는 안내문 (적용됐는지 / 오류가 났는지 폰에서 바로 보이게)
+  function toast(msg, bad) {
+    try {
+      var t = document.createElement('div');
+      t.textContent = msg;
+      t.style.cssText = 'position:fixed;left:12px;right:12px;bottom:24px;z-index:99999;padding:12px 14px;border-radius:10px;font:14px/1.4 -apple-system,sans-serif;color:#fff;background:' + (bad ? '#b4480f' : '#2f4a8a') + ';box-shadow:0 4px 16px rgba(0,0,0,.3);word-break:break-all;';
+      document.body.appendChild(t);
+      setTimeout(function () { if (t.parentNode) t.parentNode.removeChild(t); }, bad ? 12000 : 2500);
+    } catch (e) {}
+  }
+  window.__svmToast = toast;
+  if (window.__svmMobile) { window.__svmMobile.toggle(); toast(document.documentElement.classList.contains('svm-on') ? 'SVMS 모바일 보기: 켬' : 'SVMS 모바일 보기: 끔'); return; }
+  try {
 
   var VER = '1.0';
   var root = document.documentElement;
@@ -322,5 +334,8 @@
   var saved = null;
   try { saved = localStorage.getItem('svm-mobile'); } catch (e) {}
   if (window.__svmAuto && saved === 'off') { addStyle(); mo.observe(document.body, { childList: true, subtree: true }); ensureUi(); }
-  else api.on();
+  else { api.on(); toast('SVMS 모바일 보기 v' + VER + ' 적용됨 (화면폭 ' + window.innerWidth + 'px)'); }
+  } catch (err) {
+    toast('SVMS 모바일 보기 오류: ' + (err && err.message ? err.message : err), true);
+  }
 })();
