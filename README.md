@@ -16,4 +16,8 @@ javascript:void(function(d){var s=d.createElement('script');s.src='https://tanba
 
 북마크는 이 저장소의 `svms-mobile.js`를 불러와 실행합니다. 이 파일을 고치면 북마크를 다시 만들지 않아도 다음에 누를 때 바로 반영됩니다.
 
+## 태블릿 AOD 앱
+
+갤럭시 탭용 AOD 앱은 [`aod-app/`](aod-app/README.md)에 있습니다.
+
 made by 정산찬

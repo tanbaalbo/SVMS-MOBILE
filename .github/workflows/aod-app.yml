@@ -1,0 +1,49 @@
+name: AOD 앱 빌드
+
+on:
+  push:
+    paths:
+      - "aod-app/**"
+      - ".github/workflows/aod-app.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: aod-app
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - uses: gradle/actions/setup-gradle@v4
+
+      - name: APK 빌드
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleRelease --no-daemon
+          cp app/build/outputs/apk/release/app-release.apk svms-aod.apk
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: svms-aod-apk
+          path: aod-app/svms-aod.apk
+
+      # main에 올라간 최신 APK는 고정 주소로도 받을 수 있게 한다
+      - name: 최신 APK 릴리스 갱신
+        if: github.ref == 'refs/heads/main'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: aod-latest
+          name: SVMS AOD (최신)
+          body: 태블릿에서 svms-aod.apk를 받아 설치하세요.
+          files: aod-app/svms-aod.apk
+          make_latest: true

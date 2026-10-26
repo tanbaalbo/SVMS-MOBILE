@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <PreferenceCategory app:title="시작">
+        <Preference
+            app:key="start_aod"
+            app:summary="지금 바로 AOD 화면을 켭니다. 두 번 탭하면 닫힙니다."
+            app:title="AOD 켜기" />
+        <Preference
+            app:key="open_dream_settings"
+            app:summary="충전 중 자동으로 켜지게 하려면 화면 보호기에서 'SVMS AOD'를 고르세요."
+            app:title="화면 보호기로 설정" />
+    </PreferenceCategory>
+
+    <PreferenceCategory app:title="화면">
+        <ListPreference
+            app:defaultValue="tactical"
+            app:entries="@array/theme_names"
+            app:entryValues="@array/theme_values"
+            app:key="theme"
+            app:title="테마"
+            app:useSimpleSummaryProvider="true" />
+        <ListPreference
+            app:defaultValue="ship"
+            app:entries="@array/clock_names"
+            app:entryValues="@array/clock_values"
+            app:key="clock_source"
+            app:title="큰 시계 기준"
+            app:useSimpleSummaryProvider="true" />
+        <SwitchPreferenceCompat
+            app:defaultValue="true"
+            app:key="hour24"
+            app:title="24시간 표시" />
+        <SwitchPreferenceCompat
+            app:defaultValue="false"
+            app:key="show_seconds"
+            app:summary="켜면 배터리를 조금 더 씁니다."
+            app:title="초 표시" />
+        <SwitchPreferenceCompat
+            app:defaultValue="true"
+            app:key="show_battery"
+            app:title="배터리 표시" />
+        <SeekBarPreference
+            app:defaultValue="15"
+            app:key="brightness"
+            app:min="1"
+            android:max="100"
+            app:showSeekBarValue="true"
+            app:title="AOD 밝기 (%)" />
+        <SwitchPreferenceCompat
+            app:defaultValue="true"
+            app:key="pixel_shift"
+            app:summary="1분마다 화면 전체를 조금씩 움직여 OLED 번인을 줄입니다."
+            app:title="번인 방지" />
+    </PreferenceCategory>
+
+    <PreferenceCategory app:title="선박 정보">
+        <EditTextPreference
+            app:key="ship_name"
+            app:title="선박 이름"
+            app:useSimpleSummaryProvider="true" />
+        <EditTextPreference
+            app:key="voyage"
+            app:title="항차"
+            app:useSimpleSummaryProvider="true" />
+        <EditTextPreference
+            app:defaultValue="+9"
+            app:key="utc_offset"
+            app:summary="예: +9, -5, +5.5"
+            app:title="선박 시차 (UTC 기준)" />
+        <SwitchPreferenceCompat
+            app:defaultValue="true"
+            app:key="show_utc"
+            app:title="UTC 시간도 표시" />
+        <ListPreference
+            app:defaultValue="none"
+            app:entries="@array/watch_names"
+            app:entryValues="@array/watch_values"
+            app:key="my_watch"
+            app:title="내 당직"
+            app:useSimpleSummaryProvider="true" />
+        <SwitchPreferenceCompat
+            app:defaultValue="true"
+            app:key="show_watch"
+            app:summary="현재 당직과 교대까지 남은 시간을 표시합니다."
+            app:title="당직 표시" />
+        <EditTextPreference
+            app:key="next_port"
+            app:title="다음 항구"
+            app:useSimpleSummaryProvider="true" />
+        <EditTextPreference
+            app:key="eta"
+            app:summary="예: 10/28 14:00"
+            app:title="ETA" />
+        <EditTextPreference
+            app:key="memo"
+            app:title="메모 한 줄"
+            app:useSimpleSummaryProvider="true" />
+    </PreferenceCategory>
+
+    <PreferenceCategory app:title="SVMS">
+        <SwitchPreferenceCompat
+            app:defaultValue="false"
+            app:key="svms_enabled"
+            app:summary="AOD 화면 한쪽에 SVMS 화면을 띄웁니다."
+            app:title="SVMS 화면 표시" />
+        <Preference
+            app:key="svms_login"
+            app:summary="먼저 여기서 한 번 로그인해 두세요."
+            app:title="SVMS 로그인" />
+        <EditTextPreference
+            app:defaultValue="https://svms.sinokor.co.kr/"
+            app:key="svms_url"
+            app:summary="로그인 후 보고 싶은 SVMS 화면 주소"
+            app:title="표시할 주소" />
+        <ListPreference
+            app:defaultValue="10"
+            app:entries="@array/refresh_names"
+            app:entryValues="@array/refresh_values"
+            app:key="svms_refresh"
+            app:title="새로고침 간격"
+            app:useSimpleSummaryProvider="true" />
+        <SwitchPreferenceCompat
+            app:defaultValue="true"
+            app:key="svms_mobile"
+            app:summary="저장소의 svms-mobile.js를 적용해 좁은 화면에 맞춥니다."
+            app:title="모바일 보기 적용" />
+        <SwitchPreferenceCompat
+            app:defaultValue="true"
+            app:key="svms_dark"
+            app:summary="흰 배경을 검게 뒤집어 눈부심과 번인을 줄입니다."
+            app:title="어둡게 보기" />
+    </PreferenceCategory>
+</PreferenceScreen>

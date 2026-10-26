@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.SvmsAod" parent="Theme.AppCompat.DayNight.DarkActionBar">
+        <item name="colorPrimary">#1E3A5F</item>
+        <item name="colorPrimaryDark">#122438</item>
+        <item name="colorAccent">#FF4655</item>
+    </style>
+
+    <style name="Theme.SvmsAod.Fullscreen" parent="Theme.AppCompat.NoActionBar">
+        <item name="android:windowBackground">@android:color/black</item>
+        <item name="android:windowFullscreen">true</item>
+        <item name="android:windowLayoutInDisplayCutoutMode">shortEdges</item>
+    </style>
+</resources>
