@@ -22,7 +22,7 @@ class AodDreamService : DreamService() {
     override fun onDreamingStarted() {
         super.onDreamingStarted()
         screen?.start()
-        window?.let { w -> w.attributes = w.attributes.apply { screenBrightness = AodConfig.load(this@AodDreamService).brightness } }
+        window?.let { AodScreen.applyLowPower(it, AodConfig.load(this)) }
     }
 
     override fun onDreamingStopped() {

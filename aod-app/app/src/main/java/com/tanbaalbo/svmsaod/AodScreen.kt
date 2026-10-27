@@ -1,6 +1,7 @@
 package com.tanbaalbo.svmsaod
 
 import android.annotation.SuppressLint
+import android.app.KeyguardManager
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
@@ -15,6 +16,7 @@ import android.view.GestureDetector
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
+import android.view.Window
 import android.webkit.CookieManager
 import android.webkit.WebView
 import android.webkit.WebViewClient
@@ -113,7 +115,7 @@ class AodScreen(private val context: Context, private val onExit: () -> Unit) {
             val w = web ?: createWebView().also { web = it }
             content.addView(w, LinearLayout.LayoutParams(0, 0, 1f).fill(landscape))
             handler.removeCallbacks(refresh)
-            handler.postDelayed(refresh, config.svmsRefreshMinutes * 60_000L)
+            if (config.svmsAutoRefresh) handler.postDelayed(refresh, config.svmsRefreshMinutes * 60_000L)
         } else {
             web?.destroy()
             web = null
@@ -133,6 +135,9 @@ class AodScreen(private val context: Context, private val onExit: () -> Unit) {
         settings.useWideViewPort = true
         CookieManager.getInstance().setAcceptCookie(true)
         alpha = 0.85f // 시계보다 한 단계 흐리게
+        // 잠금 화면 위에 떠 있을 때는 잠금을 풀지 않고 SVMS를 만질 수 없게 막는다
+        val keyguard = context.getSystemService(KeyguardManager::class.java)
+        setOnTouchListener { _, _ -> keyguard?.isKeyguardLocked == true }
         webViewClient = object : WebViewClient() {
             override fun onPageFinished(view: WebView, url: String) {
                 if (config.svmsDark) view.evaluateJavascript(DARK_JS, null)
@@ -149,10 +154,37 @@ class AodScreen(private val context: Context, private val onExit: () -> Unit) {
         if (level >= 0 && scale > 0) aod.batteryPercent = level * 100 / scale
         aod.charging = status == BatteryManager.BATTERY_STATUS_CHARGING || status == BatteryManager.BATTERY_STATUS_FULL
         aod.invalidate()
+        if (lowBattery(config, aod.batteryPercent, aod.charging)) onExit()
     }
 
     companion object {
         const val SVMS_HOST = "svms.sinokor.co.kr"
+
+        /** 충전 중이 아니고 배터리가 설정한 하한 이하이면 AOD를 띄우지 않는다 */
+        fun lowBattery(c: AodConfig, percent: Int, charging: Boolean) =
+            c.minBattery > 0 && !charging && percent in 0..c.minBattery
+
+        /**
+         * AOD 창의 밝기를 낮추고, 패널이 지원하는 가장 낮은 주사율을 요청한다.
+         * 화면 내용은 1분에 한 번만 다시 그리지만, 패널은 내용이 그대로여도 주사율만큼
+         * 계속 화면을 다시 내보내므로 120Hz → 60Hz 등으로 낮춰 두면 그만큼 덜 쓴다.
+         * 어디까지 내려가는지는 패널이 알려 주는 모드에 달려 있다.
+         */
+        fun applyLowPower(window: Window, config: AodConfig) {
+            @Suppress("DEPRECATION")
+            val display = window.windowManager.defaultDisplay
+            val current = display.mode
+            val lowest = display.supportedModes
+                .filter { it.physicalWidth == current.physicalWidth && it.physicalHeight == current.physicalHeight }
+                .minByOrNull { it.refreshRate }
+            window.attributes = window.attributes.apply {
+                screenBrightness = config.brightness
+                if (lowest != null) {
+                    preferredDisplayModeId = lowest.modeId
+                    preferredRefreshRate = lowest.refreshRate
+                }
+            }
+        }
 
         /** 흰 배경 페이지를 검게 뒤집는다 (사진·그림은 다시 뒤집어 원래 색) */
         private const val DARK_JS = """(function(d){if(d.getElementById('svms-aod-dark'))return;

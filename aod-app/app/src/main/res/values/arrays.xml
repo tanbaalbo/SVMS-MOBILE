@@ -47,4 +47,19 @@
         <item>30</item>
         <item>60</item>
     </string-array>
+
+    <string-array name="min_battery_names">
+        <item>끄지 않음</item>
+        <item>10% 이하 (충전 중 제외)</item>
+        <item>20% 이하 (충전 중 제외)</item>
+        <item>30% 이하 (충전 중 제외)</item>
+        <item>50% 이하 (충전 중 제외)</item>
+    </string-array>
+    <string-array name="min_battery_values">
+        <item>0</item>
+        <item>10</item>
+        <item>20</item>
+        <item>30</item>
+        <item>50</item>
+    </string-array>
 </resources>

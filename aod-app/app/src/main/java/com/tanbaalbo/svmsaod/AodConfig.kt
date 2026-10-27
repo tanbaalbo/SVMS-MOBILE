@@ -26,9 +26,12 @@ data class AodConfig(
     val memo: String,
     val svmsEnabled: Boolean,
     val svmsUrl: String,
+    val svmsAutoRefresh: Boolean,
     val svmsRefreshMinutes: Int,
     val svmsMobile: Boolean,
     val svmsDark: Boolean,
+    val autoAod: Boolean,
+    val minBattery: Int,
 ) {
     /** 큰 시계가 따르는 시간대 */
     val mainZone: ZoneId get() = if (useShipClock) shipOffset else ZoneId.systemDefault()
@@ -57,9 +60,12 @@ data class AodConfig(
                 memo = str("memo"),
                 svmsEnabled = p.getBoolean("svms_enabled", false),
                 svmsUrl = str("svms_url", "https://svms.sinokor.co.kr/").ifEmpty { "https://svms.sinokor.co.kr/" },
+                svmsAutoRefresh = p.getBoolean("svms_auto_refresh", true),
                 svmsRefreshMinutes = str("svms_refresh", "10").toIntOrNull()?.coerceAtLeast(1) ?: 10,
                 svmsMobile = p.getBoolean("svms_mobile", true),
                 svmsDark = p.getBoolean("svms_dark", true),
+                autoAod = p.getBoolean("auto_aod", false),
+                minBattery = str("min_battery", "20").toIntOrNull() ?: 20,
             )
         }
 
