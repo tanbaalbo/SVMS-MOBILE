@@ -404,7 +404,7 @@ ul.log li.is-undone .lt{color:var(--muted);text-decoration:line-through}
   <details class="panel fold">
     <summary>계산 방식 · 표시 설명</summary>
     <div class="fold-body">
-      <p class="rule" id="planRule"><b>예상 하선일</b> 한국인은 같은 직책에서 승선일이 빠른 사람부터, 그때 휴가가 가장 먼저 끝나는 대명자가 교대한다고 보고 그 대명자의 휴가가 끝난 다음 날을 예상 하선일로 잡습니다(이미 끝났으면 "교대 가능"). 대명자가 모자라면, 먼저 내린 사람이 휴가를 마치고 다시 교대하러 온다고 이어서 계산합니다("연쇄 예상"). 승선 8개월(휴가 부여 기한)을 넘기게 되면 빨간 글씨로 표시합니다. 외국인은 승선일부터 8개월째 끝나는 날(계약 만료)에 내립니다. 내린 외국인은 대명자에 넣지 않습니다. 한국인 계약 만료일(승선일부터 4개월째 끝나는 날)은 참고로 함께 적어 둡니다(예상 하선일 계산에는 넣지 않음). A/O(견습)는 예상하지 않습니다.</p>
+      <p class="rule" id="planRule"><b>예상 하선일</b> 한국인은 같은 직책에서 승선일이 빠른 사람부터, 그때 휴가가 가장 먼저 끝나는 대명자가 교대한다고 보고 그 대명자의 휴가가 끝난 다음 날을 예상 하선일로 잡습니다(이미 끝났으면 "교대 가능"). 대명자가 모자라면, 먼저 내린 사람이 휴가를 마치고 다시 교대하러 온다고 이어서 계산합니다("연쇄 예상"). 승선 8개월(휴가 부여 기한)을 넘기게 되면 빨간 글씨로 표시합니다. 외국인은 승선일부터 8개월째 끝나는 날(계약 만료)에 내립니다. 내린 외국인·A/O(견습)·촉탁(만 65세 이상, 또는 촉탁 표시)은 대명자에 넣지 않습니다. 한국인 계약 만료일(승선일부터 4개월째 끝나는 날)은 참고로 함께 적어 둡니다(예상 하선일 계산에는 넣지 않음). A/O(견습)는 예상하지 않습니다.</p>
       <p class="rule" id="leaveRule"><b>휴가 끝나는 날</b> 선원 유급휴가 계산기와 같은 방식입니다: 직전 승선일~하선일 승무 1개월에 10일, 1개월 미만은 남은 일수 ÷ 30 × 10, 1일 미만 올림, 만 6개월 넘긴 꽉 찬 개월마다 보상휴가 1일, 입사일(SVMS Hire Date)부터 하선일까지 근속 2년 이상이면 (연수 − 1)일 근속 가산. 휴가는 하선 다음 날부터, 휴가 중 일요일·관공서 공휴일(2026·2027 발표분)은 세지 않고 그만큼 늘어납니다. 휴가 중 교육은 넣지 않았습니다.</p>
       <div class="legend">
         <span><span class="sw" style="background:var(--contract)"></span>촉탁자</span>
@@ -491,7 +491,14 @@ ul.log li.is-undone .lt{color:var(--muted);text-decoration:line-through}
   const shipIdx=s=>{ const i=SHIP_ORDER.indexOf(s); return i<0? 99:i; };
   function onboard(rk){ return crew.filter(c=>c.rank===rk&&c.status==="on").sort((a,b)=>(a.date||"").localeCompare(b.date||"")||shipIdx(a.ship)-shipIdx(b.ship)||a.name.localeCompare(b.name)); }
   /* 승선 순번: 한국인은 휴가 끝나는 날 빠른 순 → 직전 승선일이 없어 휴가를 못 구한 사람(하선일 순) → 외국인(하선일 순) → 휴직·SVMS 없음 */
-  function standby(rk){ const all=crew.filter(c=>c.rank===rk&&c.status==="off"&&!c.foreign);   /* 외국인은 대명자에 넣지 않음 (내린 외국인은 숨겨 둠 — 새 계약으로 다시 타면 그대로 찾음) */
+  /* 촉탁: 만 65세 이상 (9/28 회사 순번표의 촉탁 표시와 같은 기준). 생년월일은 앱·사파리의 연락처(이 기기에만 저장)에서, 없으면 촉탁 표시(contract)로 판단 */
+  const RETIRE_AGE=65;
+  function ageOf(birthIso,t){ const b=parse(birthIso); if(b===null) return null; const bd=new Date(b), td=new Date(t==null? today() : t);
+    let a=td.getUTCFullYear()-bd.getUTCFullYear(); if(td.getUTCMonth()<bd.getUTCMonth() || (td.getUTCMonth()===bd.getUTCMonth() && td.getUTCDate()<bd.getUTCDate())) a--; return a; }
+  function birthOf(c){ if(c.birth) return c.birth; const ct=(c.uid && typeof contacts!=="undefined")? contacts[c.uid] : null; return ct && ct.birth? ct.birth : ""; }
+  function retiree(c){ if(c.contract) return true; const a=ageOf(birthOf(c)); return a!==null && a>=RETIRE_AGE; }
+  /* 대명자: 내린 한국인 중 A/O(견습)·촉탁이 아닌 사람. 외국인·견습·촉탁은 내려도 대명자에 넣지 않음 (지우지는 않고 숨겨 둠 — 다시 타면 그대로 찾음) */
+  function standby(rk){ const all=crew.filter(c=>c.rank===rk&&c.status==="off"&&!c.foreign&&c.rank!=="A/O"&&!retiree(c));
     all.forEach(c=>{ c._lv=leaveOf(c); });
     const byOff=(a,b)=>(a.date||"9").localeCompare(b.date||"9")||a.id.localeCompare(b.id);
     const act=all.filter(c=>!c.hold);
@@ -707,7 +714,7 @@ ul.log li.is-undone .lt{color:var(--muted);text-decoration:line-through}
   }
   function tagsFor(c,where){
     const w=el("div","tags");
-    if(c.contract) w.appendChild(el("span","tag contract","촉탁"));
+    if(retiree(c)){ const a=ageOf(birthOf(c)); w.appendChild(el("span","tag contract", a!==null? "촉탁 · 만 "+a+"세" : "촉탁")); }
     if(c.mark) w.appendChild(el("span","tag mark","9/28 노란칸"));
     if(c.hold) w.appendChild(el("span","tag hold",c.hold));
     if(c.foreign) w.appendChild(el("span","tag",where==="on"? "외국인 · 8개월 계약" : "외국인 · 휴가 계산 안 함"));
@@ -1027,21 +1034,26 @@ ul.log li.is-undone .lt{color:var(--muted);text-decoration:line-through}
     const cand=[...past.values()].filter(r=>!nowKey.has(r.USER_ID||svName(r)) && isoD(r.DEM_DT) && (r.CTRY_CD||"")==="KR");   /* 외국인은 대명자로 안 만듦 */
     svStatus("대명자 재직 여부 확인 중…");
     let emp=null;
-    try{ const ids=cand.map(r=>r.USER_ID).filter(Boolean); if(ids.length){ const rs=await svQuery({VSL_CD:"",EM_DT:ymd(T),STATUS:"E",IDS:ids}); emp=new Map(rs.map(r=>[r.USER_ID,r])); } }
+    try{ const ids=cand.map(r=>r.USER_ID).filter(Boolean); if(ids.length){ const rs=await svQuery({VSL_CD:"",EM_DT:ymd(T),STATUS:"E",IDS:ids,contact:true}); emp=new Map(rs.map(r=>[r.USER_ID,r])); } }   /* contact: 생년월일로 촉탁 판단 */
     catch(e){ if(e.code==="login") throw e; emp=null; }
     const checked= !!(emp && [...emp.values()].some(r=>!r.VSL_CD));   /* 배 없는 재직자가 하나도 없으면 확인이 안 된 것으로 봄 */
-    const pool=[]; let other=0, gone=0;
+    const pool=[], poolContacts=[]; let other=0, gone=0, trainee=0, retired=0;
     cand.forEach(r=>{ const cur= checked && r.USER_ID? emp.get(r.USER_ID) : null;
       if(checked){ if(!cur){ gone++; return; } if(cur.VSL_CD){ other++; return; } }
       const rk= cur && SV_KEEP.has(cur.RANK_NM)? (SV_RANK[cur.RANK_NM]||cur.RANK_NM) : (SV_RANK[r.RANK_NM]||r.RANK_NM);
+      if(rk==="A/O"){ trainee++; return; }                                                   /* 견습은 대명자로 안 만듦 */
+      const birth= cur? isoD(cur.BIRTH_DT) : ""; const age=ageOf(birth);
+      if(age!==null && age>=RETIRE_AGE){ retired++; return; }                                  /* 촉탁(만 65세 이상)은 대명자로 안 만듦 */
+      if(cur && r.USER_ID) poolContacts.push({uid:r.USER_ID,birth,phone:String(cur.MOBILE_NO||"").trim()});
       pool.push(Object.assign(blankDoc(),{uid:r.USER_ID||"",name:svName(r),rank:rk,status:"off",ship:r.VSL_CD,date:isoD(r.DEM_DT),prevOn:isoD(r.EM_DT),foreign:(r.CTRY_CD||"")!=="KR",hire:isoD((cur&&cur.HIRE_DT)||r.HIRE_DT),note: checked? "" : "SVMS 재직 확인 못함"})); });
     svStatus("명단 저장 중…");
     for(const r of now) await db.collection("crew").doc().set(Object.assign(blankDoc(),{uid:r.uid,name:r.name,rank:r.rank,status:"on",ship:r.ship,date:r.date,foreign:r.ctry!=="KR",hire:r.ctry==="KR"? r.hire : ""}));
     for(const d of pool) await db.collection("crew").doc().set(d);
-    await svSaveContacts(now);
+    await svSaveContacts(now.concat(poolContacts));
     await db.doc("meta/info").update({asOf:T,lastSync:new Date().toISOString(),source:"SVMS Crew List "+T+" 조회 (앱) · 최근 8개월 9척 승선 기록으로 대명자"});
-    await addLog("SVMS에서 처음 명단을 만들었습니다 ("+yymmdd(T)+"): 승선 "+now.length+"명 · 대명자 "+pool.length+"명"+(checked? (other||gone? " (다른 배 승선 "+other+"명·재직 아님 "+gone+"명 뺌)" : "") : " · 재직 여부는 확인 못함"));
-    return {now:now.length, pool:pool.length, other, gone, checked};
+    const dropped=[]; if(other) dropped.push("다른 배 승선 "+other+"명"); if(gone) dropped.push("재직 아님 "+gone+"명"); if(trainee) dropped.push("견습 "+trainee+"명"); if(retired) dropped.push("촉탁 "+retired+"명");
+    await addLog("SVMS에서 처음 명단을 만들었습니다 ("+yymmdd(T)+"): 승선 "+now.length+"명 · 대명자 "+pool.length+"명"+(dropped.length? " ("+dropped.join("·")+" 뺌)" : "")+(checked? "" : " · 재직 여부는 확인 못함"));
+    return {now:now.length, pool:pool.length, other, gone, trainee, retired, checked};
   }
   async function svPlanUpdate(){
     const T=isoOf(today()), rows=await svToday(T);
@@ -1075,7 +1087,7 @@ ul.log li.is-undone .lt{color:var(--muted);text-decoration:line-through}
     ons.forEach(x=>{ const r=x.r, o=offs.find(f=>!used.has(f) && f.c.ship===r.ship && f.c.rank===r.rank);
       if(o){ used.add(o); lines.push({t:r.ship+" "+r.rank+" 교대: "+o.c.name+" 하선 "+yymmdd(o.dem)+" → "+r.name+" 승선 "+yymmdd(r.date)+(x.type==="new"?" (새 사람)":""), est:o.est}); }
       else lines.push({t:r.ship+" "+r.rank+" "+r.name+" 승선 "+yymmdd(r.date)+(x.type==="new"?" (새 사람)":" (대명자에서)")}); });
-    offs.filter(o=>!used.has(o)).forEach(o=>lines.push({t:o.c.ship+" "+o.c.rank+" "+o.c.name+" 하선 "+yymmdd(o.dem)+(o.c.foreign? " (외국인 — 대명자에 안 넣음)" : " (대명자로)"), est:o.est}));
+    offs.filter(o=>!used.has(o)).forEach(o=>lines.push({t:o.c.ship+" "+o.c.rank+" "+o.c.name+" 하선 "+yymmdd(o.dem)+(o.c.foreign? " (외국인 — 대명자에 안 넣음)" : o.c.rank==="A/O"? " (견습 — 대명자에 안 넣음)" : retiree(o.c)? " (촉탁 — 대명자에 안 넣음)" : " (대명자로)"), est:o.est}));
     plan.changes.filter(x=>x.type==="fix").forEach(x=>{ const lb={date:"승선일",hire:"입사일"}; lines.push({t:"정보 고침: "+x.c.ship+" "+x.c.rank+" "+x.c.name+" — "+Object.keys(x.upd).map(k=>lb[k]+" "+(x.c[k]||"없음")+" → "+x.upd[k]).join(", ")}); });
     return lines;
   }
@@ -1138,7 +1150,8 @@ ul.log li.is-undone .lt{color:var(--muted);text-decoration:line-through}
       let res;
       try{ res=await once(); }
       catch(e){ if(e.code!=="login") throw e; svStatus("SVMS 로그인이 끊겨서 다시 로그인합니다…"); await svOpen(); res=await once(); }
-      if(first){ svStatus("명단을 만들었습니다: 승선 "+res.now+"명 · 대명자 "+res.pool+"명"+(res.checked? "" : " (대명자 재직 여부는 확인하지 못했습니다)")+". 미리 등록할 교대가 있으면 교대 등록으로 넣어 주세요."); }
+      if(first){ const dr=[]; if(res.trainee) dr.push("견습 "+res.trainee+"명"); if(res.retired) dr.push("촉탁 "+res.retired+"명");
+        svStatus("명단을 만들었습니다: 승선 "+res.now+"명 · 대명자 "+res.pool+"명"+(dr.length? " ("+dr.join("·")+"은 대명자에서 뺌)" : "")+(res.checked? "" : " (대명자 재직 여부는 확인하지 못했습니다)")+". 미리 등록할 교대가 있으면 교대 등록으로 넣어 주세요."); }
       else {
         await svSilent(res);
         svPlan=res;
