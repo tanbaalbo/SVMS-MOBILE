@@ -265,6 +265,7 @@ body.is-dragging{-webkit-user-select:none;user-select:none;cursor:grabbing}
 .dur{font-size:11.5px;color:var(--muted);white-space:nowrap}
 .acts{display:flex;gap:4px;margin-top:3px}
 .btn{appearance:none;font:inherit;font-size:12px;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:6px;padding:2px 8px;cursor:pointer}
+.btn.ghost{color:var(--muted)}
 .btn:hover{border-color:var(--accent);color:var(--accent)}
 .btn:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
 .btn.primary{background:var(--accent);border-color:var(--accent);color:var(--surface)}
@@ -289,10 +290,6 @@ label.chk{display:flex;gap:6px;align-items:center;font-size:13px}
 .rule b{color:var(--ink);font-weight:500;margin-right:4px}
 .foot{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px}
 @media (max-width:860px){.foot{grid-template-columns:minmax(0,1fr)}}
-.tbl-wrap{overflow-x:auto}
-table.ships{border-collapse:collapse;width:100%;font-size:12.5px}
-table.ships th,table.ships td{border-bottom:1px solid var(--line);padding:6px 8px;text-align:center;white-space:nowrap}
-table.ships th{color:var(--muted);font-weight:500;text-align:left}
 ul.log{list-style:none;margin:0;padding:0 14px 8px;max-height:260px;overflow:auto}
 ul.log li{padding:7px 0;border-bottom:1px solid var(--line);font-size:12.5px;display:flex;gap:10px}
 ul.log li:last-child{border-bottom:0}
@@ -408,9 +405,7 @@ ul.log li.is-undone .lt{color:var(--muted);text-decoration:line-through}
       <p class="rule" id="leaveRule"><b>휴가 끝나는 날</b> 선원 유급휴가 계산기와 같은 방식입니다: 직전 승선일~하선일 승무 1개월에 10일, 1개월 미만은 남은 일수 ÷ 30 × 10, 1일 미만 올림, 만 6개월 넘긴 꽉 찬 개월마다 보상휴가 1일, 입사일(SVMS Hire Date)부터 하선일까지 근속 2년 이상이면 (연수 − 1)일 근속 가산. 휴가는 하선 다음 날부터, 휴가 중 일요일·관공서 공휴일(2026·2027 발표분)은 세지 않고 그만큼 늘어납니다. 휴가 중 교육은 넣지 않았습니다.</p>
       <div class="legend">
         <span><span class="sw" style="background:var(--contract)"></span>촉탁자</span>
-        <span><span class="sw" style="background:var(--mark)"></span>9/28 원본 노란칸</span>
-        <span style="color:var(--blue)">파란 이름 = 9/28 원본 파란 이름</span>
-        <span><span class="sw" style="background:var(--hold)"></span>순번 제외 (휴직 · SVMS 없음)</span>
+        <span><span class="sw" style="background:var(--hold)"></span>휴직 (순번 제외)</span>
         <span><span class="date">*</span> 하선일 추정</span>
         <span><span class="date">†</span> 2028년 공휴일 자료 없음 (일요일만 반영)</span>
         <span>승선기간 = 승선일·오늘 포함</span>
@@ -418,14 +413,6 @@ ul.log li.is-undone .lt{color:var(--muted);text-decoration:line-through}
     </div>
   </details>
 
-  <details class="panel fold">
-    <summary>선박 정보</summary>
-    <div class="fold-body">
-      <div class="tbl-wrap"><table class="ships" id="ships"><tbody><tr><td>불러오는 중</td></tr></tbody></table></div>
-      <p class="small" id="srcNote" style="padding:0"></p>
-      <span class="hint" id="cntShips" hidden></span>
-    </div>
-  </details>
   <p class="madeby">Made By 정산찬</p>
 </div>
 
@@ -715,7 +702,6 @@ ul.log li.is-undone .lt{color:var(--muted);text-decoration:line-through}
   function tagsFor(c,where){
     const w=el("div","tags");
     if(retiree(c)){ const a=ageOf(birthOf(c)); w.appendChild(el("span","tag contract", a!==null? "촉탁 · 만 "+a+"세" : "촉탁")); }
-    if(c.mark) w.appendChild(el("span","tag mark","9/28 노란칸"));
     if(c.hold) w.appendChild(el("span","tag hold",c.hold));
     if(c.foreign) w.appendChild(el("span","tag",where==="on"? "외국인 · 8개월 계약" : "외국인 · 휴가 계산 안 함"));
     if(where==="off" && !c.foreign && !c.hold && !c._lv) w.appendChild(el("span","tag warn","직전 승선일 없음"));
@@ -724,8 +710,17 @@ ul.log li.is-undone .lt{color:var(--muted);text-decoration:line-through}
   function acts(c,swap){
     const a=el("div","acts");
     if(swap){ const x=el("button","btn","교대 등록"); x.type="button"; x.addEventListener("click",()=>openEditor({mode:"swap",id:c.id})); a.appendChild(x); }
+    else { const h=el("button","btn"+(c.hold? "" : " ghost"), c.hold? "휴직 해제" : "휴직"); h.type="button"; h.title= c.hold? "순번에 다시 넣기" : "휴직으로 순번에서 빼기"; h.addEventListener("click",()=>toggleHold(c)); a.appendChild(h); }
     const y=el("button","btn","수정"); y.type="button"; y.addEventListener("click",()=>openEditor({mode:"edit",id:c.id})); a.appendChild(y);
     return a;
+  }
+  /* 대명자 휴직: 한 번 누르면 순번에서 빠지고(회색), 다시 누르면 돌아옴. 변경 기록에 남고 되돌릴 수 있음 */
+  async function toggleHold(c){
+    if(!canWrite) return;
+    const before=clean(c), after=Object.assign({},before,{hold: c.hold? "" : "휴직"});
+    try{ await db.collection("crew").doc(c.id).update({hold:after.hold});
+      await addLog(c.rank+" "+c.name+(after.hold? " 휴직 (순번 제외)" : " 휴직 해제 (순번 복귀)"), [{id:c.id,before,after}], "hold"); }
+    catch(e){ undoNote={ok:false,text:"저장하지 못했습니다: "+errText(e)}; renderUndoBar(); }
   }
   function rowOn(c,pos){
     const li=el("li","row"); li.dataset.id=c.id;
@@ -733,7 +728,7 @@ ul.log li.is-undone .lt{color:var(--muted);text-decoration:line-through}
     const who=el("div","who");
     const l1=el("div","line1"); l1.appendChild(el("span","shipname",c.ship));
     who.appendChild(l1);
-    const sb=el("span","sub"); sb.appendChild(el("span","name"+(c.blue?" blue":""),c.name)); sb.appendChild(document.createTextNode(" · "+yymmdd(c.date)+" 승선 · "+aboard(c.date))); who.appendChild(sb);
+    const sb=el("span","sub"); sb.appendChild(el("span","name",c.name)); sb.appendChild(document.createTextNode(" · "+yymmdd(c.date)+" 승선 · "+aboard(c.date))); who.appendChild(sb);
     const tg=tagsFor(c,"on"); if(tg.childNodes.length) who.appendChild(tg);
     const rt=reliefText(c); if(rt) who.appendChild(rt);
     if(c.note) who.appendChild(el("span","rnote",c.note));
@@ -748,7 +743,7 @@ ul.log li.is-undone .lt{color:var(--muted);text-decoration:line-through}
     const li=el("li","row off-row"); if(c.hold) li.classList.add("is-hold");
     li.dataset.id=c.id; const ps=el("span","pos"); ps.appendChild(el("span",null,pos==null? "–" : String(pos))); if(canWrite) ps.appendChild(el("span","drag-handle","⠿")); li.appendChild(ps);
     const who=el("div","who");
-    who.appendChild(el("span","name"+(c.blue?" blue":""),c.name));
+    who.appendChild(el("span","name",c.name));
     const tg=tagsFor(c,"off"); if(tg.childNodes.length) who.appendChild(tg);
     if(c._lv){ const L=c._lv; let s="휴가 "+L.days+"일 = 기본 "+L.base; if(L.comp) s+=" + 보상 "+L.comp; if(L.senior) s+=" + 근속 "+L.senior+" (입사 "+L.yrs+"년)"; if(L.yrs==null) s+=" · 입사일 없어 근속 가산 모름"; who.appendChild(el("span","rnote",s)); }
     if(c._for) who.appendChild(el("span","rnote","→ "+c._for.ship+" "+c._for.name+" 교대 예상"));
@@ -798,15 +793,6 @@ ul.log li.is-undone .lt{color:var(--muted);text-decoration:line-through}
   }
   function renderMeta(){
     $("asof").textContent= meta && meta.asOf? "SVMS "+meta.asOf+" 기준" : (crew.length? "기준일 정보 없음":"명단 없음");
-    const t=$("ships"); t.textContent="";
-    const ships=(meta&&meta.ships)||SHIP_ORDER.map(c=>({code:c}));
-    const tb=el("tbody");
-    const rows=[["선명","code"],["SIZE (TEU)","size"],["건조","built"],["구분","kind"]];
-    rows.forEach(([lab,k])=>{ const tr=el("tr"); tr.appendChild(el("th",null,lab));
-      ships.forEach(s=>{ const td=el("td",null, s[k]!=null? String(s[k]):"—"); if(k!=="kind") td.classList.add("mono"); tr.appendChild(td); }); tb.appendChild(tr); });
-    t.appendChild(tb);
-    $("cntShips").textContent=ships.length+"척";
-    $("srcNote").textContent= meta? ("근거: "+meta.source+". "+(meta.estNote||"")) : "";
   }
   function renderLog(){
     const u=$("log"); u.textContent="";
@@ -917,7 +903,7 @@ ul.log li.is-undone .lt{color:var(--muted);text-decoration:line-through}
       const sh=inp("text",c.ship,"edShip"); sh.setAttribute("list","shipCodes"); sh.placeholder="예: HAYN";
       const dl=document.createElement("datalist"); dl.id="shipCodes"; SHIP_ORDER.forEach(s=>{const o=document.createElement("option");o.value=s;dl.appendChild(o);});
       const dt=inp("date",c.date,"edDate");
-      const hd=document.createElement("select"); hd.id="edHold"; [["","없음"],["휴직","휴직"],["SVMS 없음","SVMS 없음"]].forEach(([v,t])=>{const o=document.createElement("option");o.value=v;o.textContent=t;if(v===(c.hold||""))o.selected=true;hd.appendChild(o);});
+      const hd=document.createElement("select"); hd.id="edHold"; [["","없음"],["휴직","휴직"]].forEach(([v,t])=>{const o=document.createElement("option");o.value=v;o.textContent=t;if(v===(c.hold||""))o.selected=true;hd.appendChild(o);});
       const nt=inp("text",c.note,"edNote");
       const po=inp("date",c.prevOn,"edPrevOn");
       const hi=inp("date",c.hire,"edHire");
@@ -1045,7 +1031,7 @@ ul.log li.is-undone .lt{color:var(--muted);text-decoration:line-through}
       const birth= cur? isoD(cur.BIRTH_DT) : ""; const age=ageOf(birth);
       if(age!==null && age>=RETIRE_AGE){ retired++; return; }                                  /* 촉탁(만 65세 이상)은 대명자로 안 만듦 */
       if(cur && r.USER_ID) poolContacts.push({uid:r.USER_ID,birth,phone:String(cur.MOBILE_NO||"").trim()});
-      pool.push(Object.assign(blankDoc(),{uid:r.USER_ID||"",name:svName(r),rank:rk,status:"off",ship:r.VSL_CD,date:isoD(r.DEM_DT),prevOn:isoD(r.EM_DT),foreign:(r.CTRY_CD||"")!=="KR",hire:isoD((cur&&cur.HIRE_DT)||r.HIRE_DT),note: checked? "" : "SVMS 재직 확인 못함"})); });
+      pool.push(Object.assign(blankDoc(),{uid:r.USER_ID||"",name:svName(r),rank:rk,status:"off",ship:r.VSL_CD,date:isoD(r.DEM_DT),prevOn:isoD(r.EM_DT),foreign:(r.CTRY_CD||"")!=="KR",hire:isoD((cur&&cur.HIRE_DT)||r.HIRE_DT),note:""})); });
     svStatus("명단 저장 중…");
     for(const r of now) await db.collection("crew").doc().set(Object.assign(blankDoc(),{uid:r.uid,name:r.name,rank:r.rank,status:"on",ship:r.ship,date:r.date,foreign:r.ctry!=="KR",hire:r.ctry==="KR"? r.hire : ""}));
     for(const d of pool) await db.collection("crew").doc().set(d);
