@@ -76,6 +76,19 @@
             app:title="번인 방지" />
     </PreferenceCategory>
 
+    <PreferenceCategory app:title="주사율 (시험용)">
+        <SwitchPreferenceCompat
+            app:defaultValue="false"
+            app:key="show_hz"
+            app:summary="AOD 오른쪽 아래에 지금 주사율과 고를 수 있는 모드를 1초마다 표시합니다."
+            app:title="주사율 표시" />
+        <SwitchPreferenceCompat
+            app:defaultValue="false"
+            app:key="low_refresh"
+            app:summary="앱이 고를 수 있는 가장 낮은 모드를 요청합니다. 패널이 스스로 1Hz까지 내리는 기기에서는 오히려 60Hz에 묶일 수 있으니, 주사율 표시로 켜고 끈 값을 비교해 보세요."
+            app:title="낮은 주사율 요청" />
+    </PreferenceCategory>
+
     <PreferenceCategory app:title="선박 정보">
         <EditTextPreference
             app:key="ship_name"

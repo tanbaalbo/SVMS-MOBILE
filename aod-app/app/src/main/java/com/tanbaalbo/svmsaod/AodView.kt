@@ -100,6 +100,25 @@ class AodView(context: Context) : View(context) {
             r.draw(canvas, y)
             y += r.height + gap
         }
+
+        if (c.showHz) drawHz(canvas, t, u)
+    }
+
+    /**
+     * 오른쪽 아래에 지금 주사율 모드를 적는다 (진단용).
+     * 시스템이 알려 주는 모드 값이라, 패널이 정지 화면에서 스스로 더 내리는 것까지는 못 본다.
+     */
+    private fun drawHz(canvas: Canvas, t: AodTheme, u: Float) {
+        val d = display ?: return
+        val modes = d.supportedModes.map { it.refreshRate.roundToInt() }.distinct().sorted()
+        val s = "%.0f Hz  (모드 %s)".format(d.refreshRate, modes.joinToString("/"))
+        val p = Paint(text).apply {
+            typeface = t.typeface
+            textSize = 2.6f * u
+            color = t.dim
+            textAlign = Paint.Align.RIGHT
+        }
+        canvas.drawText(s, width - 3f * u, height - 3f * u, p)
     }
 
     // ───────────────────────── 줄 만들기 ─────────────────────────

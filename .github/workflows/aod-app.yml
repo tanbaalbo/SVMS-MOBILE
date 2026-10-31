@@ -37,6 +37,18 @@ jobs:
           name: svms-aod-apk
           path: aod-app/svms-aod.apk
 
+      # 작업 브랜치의 APK는 'aod-dev' 시험판으로 올려, 태블릿에서 바로 받을 수 있게 한다
+      - name: 시험판 APK 릴리스 갱신
+        if: github.ref != 'refs/heads/main'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: aod-dev
+          name: SVMS AOD (시험판)
+          body: 작업 브랜치에서 빌드한 시험판입니다. 태블릿에서 svms-aod.apk를 받아 설치하세요.
+          files: aod-app/svms-aod.apk
+          prerelease: true
+          make_latest: false
+
       # main에 올라간 최신 APK는 고정 주소로도 받을 수 있게 한다
       - name: 최신 APK 릴리스 갱신
         if: github.ref == 'refs/heads/main'

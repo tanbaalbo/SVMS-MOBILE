@@ -42,7 +42,7 @@ class AodScreen(private val context: Context, private val onExit: () -> Unit) {
         override fun run() {
             aod.invalidate()
             val now = System.currentTimeMillis()
-            val step = if (config.showSeconds) 1000L else 60_000L
+            val step = if (config.showSeconds || config.showHz) 1000L else 60_000L
             handler.postDelayed(this, step - now % step + 20)
         }
     }
@@ -165,10 +165,9 @@ class AodScreen(private val context: Context, private val onExit: () -> Unit) {
             c.minBattery > 0 && !charging && percent in 0..c.minBattery
 
         /**
-         * AOD 창의 밝기를 낮추고, 패널이 지원하는 가장 낮은 주사율을 요청한다.
-         * 화면 내용은 1분에 한 번만 다시 그리지만, 패널은 내용이 그대로여도 주사율만큼
-         * 계속 화면을 다시 내보내므로 120Hz → 60Hz 등으로 낮춰 두면 그만큼 덜 쓴다.
-         * 어디까지 내려가는지는 패널이 알려 주는 모드에 달려 있다.
+         * AOD 창의 밝기를 낮춘다. 설정에서 켜면 앱이 고를 수 있는 가장 낮은 주사율 모드를 요청한다.
+         * 패널이 정지 화면에서 스스로 1Hz까지 내리는 기기라면 이 요청이 오히려 60Hz에
+         * 붙잡아 둘 수 있으므로 기본은 끔이고, '주사율 표시'로 켜고 끈 차이를 확인할 수 있다.
          */
         fun applyLowPower(window: Window, config: AodConfig) {
             @Suppress("DEPRECATION")
@@ -179,9 +178,12 @@ class AodScreen(private val context: Context, private val onExit: () -> Unit) {
                 .minByOrNull { it.refreshRate }
             window.attributes = window.attributes.apply {
                 screenBrightness = config.brightness
-                if (lowest != null) {
+                if (config.lowRefresh && lowest != null) {
                     preferredDisplayModeId = lowest.modeId
                     preferredRefreshRate = lowest.refreshRate
+                } else {
+                    preferredDisplayModeId = 0
+                    preferredRefreshRate = 0f
                 }
             }
         }
